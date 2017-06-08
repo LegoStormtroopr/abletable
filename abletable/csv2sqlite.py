@@ -22,8 +22,11 @@ if sys.version_info[0] > 2:
 else:
     read_mode = 'rU'
 
+import time
 
 def convert(filepath_or_fileobj, dbpath, table, headerspath_or_fileobj=None, compression=None, typespath_or_fileobj=None):
+    t = time.time()
+
     if isinstance(filepath_or_fileobj, string_types):
         if compression is None:
             fo = open(filepath_or_fileobj, mode=read_mode)
@@ -43,6 +46,8 @@ def convert(filepath_or_fileobj, dbpath, table, headerspath_or_fileobj=None, com
         dialect = csv.Sniffer().sniff(str(fo.readline()))
     fo.seek(0)
 
+    print("\n 1. Time Taken: %.3f sec" % (time.time()-t) )
+
     # get the headers
     header_given = headerspath_or_fileobj is not None
     if header_given:
@@ -57,6 +62,8 @@ def convert(filepath_or_fileobj, dbpath, table, headerspath_or_fileobj=None, com
         reader = csv.reader(fo, dialect)
         headers = [header.strip() or "column__%d"%i for i, header in enumerate(next(reader))]
         fo.seek(0)
+
+    print("\n 2. Time Taken: %.3f sec" % (time.time()-t) )
 
     # get the types
     if typespath_or_fileobj is not None:
@@ -74,6 +81,8 @@ def convert(filepath_or_fileobj, dbpath, table, headerspath_or_fileobj=None, com
         types = _guess_types(type_reader, len(headers))
         fo.seek(0)
 
+    print("\n 3. Time Taken: %.3f sec" % (time.time()-t) )
+
     # now load data
     _columns = ','.join(
         ['"%s" %s' % (header, _type) for (header,_type) in zip(headers, types)]
@@ -83,7 +92,10 @@ def convert(filepath_or_fileobj, dbpath, table, headerspath_or_fileobj=None, com
     if not header_given: # Skip the header
         next(reader)
 
+    print("\n 4. Time Taken: %.3f sec" % (time.time()-t) )
+
     conn = sqlite3.connect(dbpath)
+    conn.isolation_level = None
     # shz: fix error with non-ASCII input
     conn.text_factory = str
     c = conn.cursor()
@@ -97,11 +109,40 @@ def convert(filepath_or_fileobj, dbpath, table, headerspath_or_fileobj=None, com
     _insert_tmpl = 'INSERT INTO %s VALUES (%s)' % (table,
         ','.join(['?']*len(headers)))
 
+    print("\n 5. Time Taken: %.3f sec" % (time.time()-t) )
+
+    try:
+        # c.execute('.separator "%s"' % dialect.delimiter)    
+        # c.execute('.import %s base' % filepath_or_fileobj)
+        import os
+        csv_file_name = os.path.abspath(filepath_or_fileobj).replace('\\','/')
+        os.system('sqlite3 {db} ".separator \'{sep}\'" ".import {csv} base"'.format(
+            db=dbpath, csv=csv_file_name, sep=(dialect.delimiter or "\t")
+        ))
+        # os.system('sqlite3 {db} ".import {csv} base"'.format(
+        #     db=dbpath, csv=csv_file_name
+        # ))
+        print("\n 6. Time Taken: %.3f sec" % (time.time()-t) )
+        conn.commit()
+        c.close()
+
+        return dialect
+    except:
+        raise
+        pass
+
     # line = 0
     for line, row in enumerate(reader, 1):
         # line += 1
         if len(row) == 0:
             continue
+
+        do_start_trans = line % 25000 == 1
+        do_commit = line % 25000 == 0
+        if do_start_trans:
+            # also yield?
+            print("chunk", line // 25000)
+            c.execute('BEGIN TRANSACTION')
 
         if len(row) > len(headers):
             new_headers = ["column__%d"%i for i in range(len(headers), len(row))] 
@@ -124,6 +165,10 @@ def convert(filepath_or_fileobj, dbpath, table, headerspath_or_fileobj=None, com
             print(e)
             print("Error on line %d: %s" % (line, e), file=sys.stderr)
 
+        if do_commit:
+            c.execute('COMMIT')
+
+    print("\n 6. Time Taken: %.3f sec" % (time.time()-t) )
 
     conn.commit()
     c.close()
@@ -155,6 +200,8 @@ def _guess_types(reader, number_of_columns, max_sample_size=100):
     sample_counts = [ 0 for x in range(number_of_columns) ]
 
     for row_index,row in enumerate(reader):
+        if row_index > max_sample_size*10:
+            break
         for column,cell in enumerate(row):
             cell = cell.strip()
             if len(cell) == 0:

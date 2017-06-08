@@ -3,7 +3,7 @@ Widget definitions for JSON schema elements.
 """
 from PyQt5 import QtCore, QtGui, QtWidgets, QtSql
 import tempfile
-from .csv2sqlite import convert
+from ..csv2sqlite import convert
 import sqlite3
 import csv
 
@@ -20,6 +20,17 @@ class CSVDB(QtSql.QSqlDatabase):
             (str(record.field(i).name()), record.value(i))
             for i in range(record.count())
         )
+
+    def multirow_query(self, query, max_rows=None):
+        query = self.exec_(query)
+
+        while query.next(): # Only do it once
+            record = query.record()
+
+            yield dict(
+                (str(record.field(i).name()), record.value(i))
+                for i in range(record.count())
+            )
 
 
 class CSVLoadThread(QThread):
@@ -56,13 +67,6 @@ class CSVSaveThread(QThread):
             first = True
             while query.next():
                 record = query.record()
-                if first:
-                    first = False
-                    spamwriter.writerow([
-                        str(record.field(i).name())
-                        for i in range(record.count())
-                    ])
-
                 spamwriter.writerow([
                     record.value(i)
                     for i in range(record.count())
@@ -87,28 +91,82 @@ class Sheet(QtWidgets.QWidget):
         self.tab_manager = kwargs.pop('parent', None)
         super(Sheet, self).__init__(*args, **kwargs)
 
-        # self.set_tab_text("# {}".format(csv))
-        # self.set_tab_tooltip("Loading file {}".format(csv))
         self.content_region = QtWidgets.QScrollArea(self)
 
         self.table = QtWidgets.QTableView()
-        self.table.setSortingEnabled(True)
+        self.horiz_headers = self.table.horizontalHeader()
+        self.horiz_headers.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.horiz_headers.customContextMenuRequested.connect(self.show_horiz_context_menu)
+
+        self.vert_headers = self.table.verticalHeader()
+        self.vert_headers.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.vert_headers.customContextMenuRequested.connect(self.show_vert_context_menu)
+        # self.table.setSortingEnabled(True)
         # self.tableModel = Model(db=self.db)
         # self.table.setModel(self.tableModel)
+        self.table.horizontalHeader().setSectionsMovable(True)       
+        self.table.horizontalHeader().setDragEnabled(True)
+
+        self.table.horizontalHeader().setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
         self.table.show()
 
         self.content_region.setWidget(self.table)
         self.content_region.setWidgetResizable(True)
 
-        vbox = QtWidgets.QVBoxLayout()
-        # vbox.addWidget(self.menu)
+        # self.dock = QtWidgets.QTabWidget()
+
+        vbox = QtWidgets.QHBoxLayout()
         vbox.addWidget(self.content_region)
+        # vbox.addWidget(self.dock)
         vbox.setContentsMargins(0,0,0,0)
 
         self.setLayout(vbox)
 
+
+        # hbox = QtWidgets.QHBoxLayout()
+
+        # self.setLayout(hbox)
+
         if self.csv:
             self.open_csv(self.csv)
+
+    def show_horiz_context_menu(self, position):
+        column = self.horiz_headers.logicalIndexAt(position)
+        menu = QtWidgets.QMenu()
+        set_column_width = QtWidgets.QAction('Column width...', self,
+            triggered = lambda *x: self.handle_resize_column(column, *x)
+        )
+
+        menu.addAction(set_column_width)
+        menu.exec_(self.mapToGlobal(position))
+        #menu.popup(QtGui.QCursor.pos())
+
+    def show_vert_context_menu(self, position):
+        column = self.vert_headers.logicalIndexAt(position)
+        menu = QtWidgets.QMenu()
+        set_row_height = QtWidgets.QAction('Row height...', self,
+            triggered = lambda *x: self.handle_resize_row(column, *x)
+        )
+
+        menu.addAction(set_row_height)
+        menu.exec_(self.mapToGlobal(position))
+
+    def handle_resize_column(self, column, *args):
+        width, ok = QtWidgets.QInputDialog.getInt(
+            self, "Column Width", "Column width:",
+            value = self.table.columnWidth(column), min = 0, max = 5000
+        )
+        if ok and width and int(width) > 2:
+            self.table.setColumnWidth(column, width)
+
+    def handle_resize_row(self, row, *args):
+        height, ok = QtWidgets.QInputDialog.getInt(
+            self, "Row Height", "Row height:",
+            value = self.table.rowHeight(row), min = 0, max = 5000
+        )
+        if ok and height and int(height) > 2:
+            self.table.setRowHeight(row, height)
+
 
     def save_csv(self):
         self.get_thread = CSVSaveThread(self.csv, self.db, self.csv_dialect)
@@ -126,7 +184,6 @@ class Sheet(QtWidgets.QWidget):
         self.set_tab_text("# {}".format(self.csv))
         self.set_tab_tooltip("Loading file {}".format(self.csv))
 
-        # active_db = convert(file, db_name, "base")
         self.get_thread = CSVLoadThread(file, self.db_name)
         self.get_thread.start()
 
@@ -163,18 +220,36 @@ class Sheet(QtWidgets.QWidget):
     def tab_index(self):
         return self.tab_manager.indexOf(self)
 
+    def selected_columns(self):
+        return self.table.selectionModel().selectedColumns()
+
+    def selected_rows(self):
+        return self.table.selectionModel().selectedRows()
+
+    def selected_indexes(self):
+        indexes = self.table.selectionModel().selectedIndexes()
+        if indexes:
+            min_col = indexes[i.column()]
+            max_col = indexes[i.column()]
+            min_row = indexes[i.row()]
+            max_row = indexes[i.row()]
+            for i in self.table.selectionModel().selectedIndexes()[1:]:
+                min_col = min(min_col, i.column())
+                max_col = max(max_col, i.column())
+                min_row = min(min_row, i.row())
+                max_row = max(max_row, i.row())
+            return  (
+                (min_col,min_row),
+                (max_col,max_row)
+            )
+        return ((None, None), (None, None))
 
     def get_sheet_statistics(self):
-        self.db_name
-        
-        # c = self.db_conn.cursor()
+        print(self.count_rows())
 
-        # try:
+    def count_rows(self):
         query = 'SELECT COUNT(1) as count FROM "base"'
-        # val = c.execute(query).fetchone()
-        val = self.db.simple_query(query)#.next().result().record().value(0)
-
-        print(val)
+        return self.db.simple_query(query)['count']
 
     def add_column(self, name=None):
         extra = name or "column__sam"
