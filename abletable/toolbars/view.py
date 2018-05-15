@@ -13,8 +13,8 @@ class ChangeTableFont(ButtonWithDrop):
     def action(self):
         sheet = self.window().current_sheet()
         font, _ = QtWidgets.QFontDialog.getFont(self) #, 'Open CSV', filter="CSV File (*.csv *.tsv)")
-        if font:
-            self.window().current_sheet()
+        print(font)
+        if font and sheet:
             sheet.setFont(font)
 
     def change_for_all(self):

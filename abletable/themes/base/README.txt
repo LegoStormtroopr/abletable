@@ -1,0 +1,1 @@
+Icons from https://commons.wikimedia.org/wiki/GNOME_Desktop_icons

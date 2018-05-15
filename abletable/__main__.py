@@ -55,7 +55,7 @@ class AbleTableToolbar(TabbableToolbar):
                 ("&Open CSV", self.parent._handle_open),
                 ("&Save select table", self.parent._handle_save),
                 '--',
-                ("&Close", self.parent._handle_quit),
+                ("E&xit", self.parent._handle_quit),
             ]),
             # ("&Options", [
             #     ("Set theme", self.parent._handle_set_theme),
@@ -157,7 +157,7 @@ class AbleTableWindow(QtWidgets.QMainWindow):
         if theme_file:
             self.set_theme(theme_file)
 
-    def set_theme(self, theme):
+    def set_css_theme(self, theme):
         with open(theme) as t:
             self.setStyleSheet(t.read())
 
@@ -179,20 +179,21 @@ class AbleTableWindow(QtWidgets.QMainWindow):
 import click
 
 @click.command()
-@click.option('--csv', '-c', multiple=True, default=None, help='Schema file to generate an editing window from.')
-@click.option('--theme', type=str, default=None, help='Schema file to generate an editing window from.')
-def able_table(csv, theme): #schema, json):
+@click.option('--csv', '-c', multiple=True, default=None, help='CSV file to open')
+@click.option('--theme', type=str, default=None, help='PyQT theme to use')
+@click.option('--css', type=str, default=None, help='CSS theme to use')
+@click.option('--project', type=str, default=None, help='Load a project')
+def able_table(csv, theme, css, project): #schema, json):
     import sys, os
     
-    print("theme", theme)
     if theme == "::res::":
         from .themes.excelsior import theme as _t
+    # default theme
     from .themes.base import theme as _t
 
     main_window = AbleTableWindow()
-    main_window.resize(800,600)
+    main_window.resize(1200,800)
 
-    # default theme
 
     main_window.show()
     for c in csv:
@@ -202,8 +203,8 @@ def able_table(csv, theme): #schema, json):
         print("setting theme", theme)
         if theme == "::res::":
             main_window.set_theme_from_resource()
-        else:
-            main_window.set_theme(theme)
+    if css is not None:
+        main_window.set_css_theme(css)
 
     sys.exit(app.exec_())
 

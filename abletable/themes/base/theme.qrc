@@ -1,0 +1,13 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+    <file alias="action/edit/paste">images/edit-paste.png</file>
+    <file alias="action/edit/copy">images/edit-copy.png</file>
+    <file alias="action/edit/cut">images/edit-cut.png</file>
+    <file alias="action/edit/redo">images/edit-redo.png</file>
+    <file alias="action/edit/undo">images/edit-undo.png</file>
+    <file alias="action/search/find-replace">images/search-find-replace.png</file>
+    <file alias="action/search/find">images/search-find.png</file>
+    <file alias="action/preferences/font">images/preferences-font.png</file>
+    <file alias="action/preferences/keyboard-shortcuts">images/preferences-desktop-keyboard-shortcuts.png</file>
+</qresource>
+</RCC>

@@ -1,0 +1,55 @@
+/** {
+	font-size:11px;
+}
+*/
+#ribbon *
+{ 
+   font-size: 13px;
+}
+/*
+#ribbon {
+	height:80px;
+	max-height:80px;
+}
+*/
+/*.QMenuBar, .QTabBar::tab, .QTabBar, .QMenuBar::item, .QMenu*/
+
+#ribbon .QTabBar::tab {
+	margin-left:8px;
+	padding:4px 12px;
+}
+/*
+#ribbon .QMenu {
+	height:200px;
+}*/
+
+#ribbon .QMenuBar::item, #ribbon .QMenuBar::item *
+{ 
+   color: white;
+   background-color: #2F6463 /* 10% darker Aristotle green */;
+}
+
+/*QMenuBar *:hover, QMenuBar::item:hover
+{ 
+   color: red;
+   background-color: green;
+}
+*/
+
+#ribbon .QLabel {
+	padding:0px;
+	margin:0px;
+}
+
+#toolbar_group * {
+	font-size: 11px;
+}
+#toolbar_group {
+    padding: 0px;
+    margin: 0px;
+}
+#toolbar_group .QLabel {
+    padding-top: 8px;
+    
+}
+

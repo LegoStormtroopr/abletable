@@ -1,0 +1,8 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+    <file alias="toolbars/home/paste">images/paste.png</file>
+    <!-- file alias="toolbars/home/copy">images/copy.png</file>
+    <file alias="toolbars/home/cut">images/cut.png</file -->
+    <file alias="theme.css">theme.css</file>
+</qresource>
+</RCC>
