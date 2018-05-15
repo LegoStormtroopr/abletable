@@ -10,7 +10,7 @@ import sys
 
 from PyQt5 import QtCore, QtGui, QtWidgets, QtSql
 
-from.widgets.sheets import Sheet
+from abletable.widgets.sheets import Sheet
 from collections import OrderedDict
 
 # from qtjsonschema.widgets import create_widget
@@ -19,31 +19,33 @@ app = QtWidgets.QApplication(sys.argv)
 drivers = QtSql.QSqlDatabase.drivers()
 
 
-class TabbableToolbar(QtWidgets.QTabWidget):
+class TabbableToolbar(QtWidgets.QTabWidget, QtWidgets.QToolBar):
     pass
 
+    def addToolTab(self, kls):
+        self.addTab(kls(), kls.title)
 
 class TabToolbar(QtWidgets.QWidget):
     def __init__(self, *args, **kwargs):
-        super(TabToolbar, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 class AbleTableToolbar(TabbableToolbar):
     def __init__(self, *args, **kwargs):
         self.parent = kwargs.pop('parent')
-        super(AbleTableToolbar, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.setObjectName("ribbon")
         # self.setMaximumHeight(50)
         s = self.sizePolicy()
         s.setVerticalPolicy(QtWidgets.QSizePolicy.Minimum)
         self.setSizePolicy(s)
 
-        from .toolbars.home import HomeToolbar
-        from .toolbars.data import DataToolbar
-        from .toolbars.view import ViewToolbar
+        from abletable.toolbars.home import HomeToolbar
+        from abletable.toolbars.data import DataToolbar
+        from abletable.toolbars.view import ViewToolbar
 
-        self.addTab(HomeToolbar(), HomeToolbar.title)
-        self.addTab(DataToolbar(), DataToolbar.title)
-        self.addTab(ViewToolbar(), ViewToolbar.title)
+        self.addToolTab(HomeToolbar)
+        self.addToolTab(DataToolbar)
+        self.addToolTab(ViewToolbar)
 
         self.set_menu()
 
@@ -79,6 +81,7 @@ class AbleTableWindow(QtWidgets.QMainWindow):
         QtWidgets.QMainWindow.__init__(self,parent)
         self.center = QtWidgets.QWidget()
         self.toolbar = AbleTableToolbar(self, parent=self)
+        self.addToolBar(self.toolbar)
 
         self.tabs = QtWidgets.QTabWidget(self)
         self.tabs.setTabsClosable(True)
@@ -87,7 +90,7 @@ class AbleTableWindow(QtWidgets.QMainWindow):
 
         vbox = QtWidgets.QVBoxLayout()
         # vbox.addWidget(self.menu)
-        vbox.addWidget(self.toolbar)
+        # vbox.addWidget(self.toolbar)
         vbox.addWidget(self.tabs)
         self.center.setLayout(vbox)
 
@@ -96,6 +99,10 @@ class AbleTableWindow(QtWidgets.QMainWindow):
 
         # self.set_menu()
         self.statusBar().showMessage('Ready')
+
+        self.reporting_dock = QtWidgets.QDockWidget("Dockable", self)
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.reporting_dock)
+
 
 
     def set_menu(self):

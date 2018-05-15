@@ -15,7 +15,11 @@ import csv
 import sqlite3
 import bz2
 import gzip
-from six import string_types, text_type
+# from six import string_types, text_type
+
+string_types = str
+text_type = str
+print(string_types, text_type)
 
 if sys.version_info[0] > 2:
     read_mode = 'rt'
@@ -111,25 +115,25 @@ def convert(filepath_or_fileobj, dbpath, table, headerspath_or_fileobj=None, com
 
     print("\n 5. Time Taken: %.3f sec" % (time.time()-t) )
 
-    try:
-        # c.execute('.separator "%s"' % dialect.delimiter)    
-        # c.execute('.import %s base' % filepath_or_fileobj)
-        import os
-        csv_file_name = os.path.abspath(filepath_or_fileobj).replace('\\','/')
-        os.system('sqlite3 {db} ".separator \'{sep}\'" ".import {csv} base"'.format(
-            db=dbpath, csv=csv_file_name, sep=(dialect.delimiter or "\t")
-        ))
-        # os.system('sqlite3 {db} ".import {csv} base"'.format(
-        #     db=dbpath, csv=csv_file_name
-        # ))
-        print("\n 6. Time Taken: %.3f sec" % (time.time()-t) )
-        conn.commit()
-        c.close()
+    # try:
+    #     # c.execute('.separator "%s"' % dialect.delimiter)    
+    #     # c.execute('.import %s base' % filepath_or_fileobj)
+    #     import os
+    #     csv_file_name = os.path.abspath(filepath_or_fileobj).replace('\\','/')
+    #     os.system('sqlite3 {db} ".separator \'{sep}\'" ".import {csv} base"'.format(
+    #         db=dbpath, csv=csv_file_name, sep=(dialect.delimiter or "\t")
+    #     ))
+    #     # os.system('sqlite3 {db} ".import {csv} base"'.format(
+    #     #     db=dbpath, csv=csv_file_name
+    #     # ))
+    #     print("\n 6. Time Taken: %.3f sec" % (time.time()-t) )
+    #     conn.commit()
+    #     c.close()
 
-        return dialect
-    except:
-        raise
-        pass
+    #     return dialect
+    # except:
+    #     # raise
+    #     pass
 
     # line = 0
     for line, row in enumerate(reader, 1):
@@ -152,11 +156,11 @@ def convert(filepath_or_fileobj, dbpath, table, headerspath_or_fileobj=None, com
         # we need to take out commas from int and floats for sqlite to
         # recognize them properly ...
         try:
-            row = [
-                None if x == ''
-                else float(x.replace(',', '')) if y == 'real'
-                else int(x) if y == 'integer'
-                else x for (x,y) in zip(row, types) ]
+            row = [str(x) for x in row]
+                # None if x == ''
+                # else float(x.replace(',', '')) if y == 'real'
+                # else int(x) if y == 'integer'
+                # else x for (x,y) in zip(row, types) ]
             c.execute(_insert_tmpl, row)
         except ValueError as e:
             print("Unable to convert value '%s' to type '%s' on line %d" % (x, y, line), file=sys.stderr)

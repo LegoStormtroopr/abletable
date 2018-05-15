@@ -10,7 +10,7 @@ class Button(QtWidgets.QPushButton):
             self._icon.addFile(self.icon)
         else:
             self._icon = QtGui.QIcon()
-        super(Button, self).__init__(self._icon, self.label, *args, **kwargs)
+        super().__init__(self._icon, self.label, *args, **kwargs)
 
         if self.icon:
             self.setIconSize(QtCore.QSize(20,20)) #self._icon.availableSizes()[0])
@@ -20,7 +20,7 @@ class Button(QtWidgets.QPushButton):
 
 class HGroup(QtWidgets.QWidget):
     def __init__(self, actions, *args, **kwargs):
-        super(HGroup, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         vbox = QtWidgets.QVBoxLayout()
         for action in actions:
             print(action)
@@ -36,7 +36,7 @@ class Group(QtWidgets.QWidget):
     def __init__(self, *args, **kwargs):
         self.label = kwargs.pop('label')
         self.actions = kwargs.pop('actions')
-        super(Group, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.setObjectName("toolbar_group")
         label = QtWidgets.QLabel(self.label)
         label.setAlignment(QtCore.Qt.AlignHCenter)
@@ -70,7 +70,7 @@ class Group(QtWidgets.QWidget):
 class ButtonWithDrop(QtWidgets.QWidget):
     icon = None
     def __init__(self, *args, **kwargs):
-        super(ButtonWithDrop, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
         if self.icon:
@@ -112,7 +112,7 @@ class ButtonWithDrop(QtWidgets.QWidget):
 
 class TabToolbar(QtWidgets.QWidget):
     def __init__(self, *args, **kwargs):
-        super(TabToolbar, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         hbox = QtWidgets.QHBoxLayout()
 
         for group in self.groups[::-1]:

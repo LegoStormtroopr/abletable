@@ -18,3 +18,12 @@ Styling:
 
 * Can I make cells different colors or fonts? No.
 * Can change the style? Yes - but it impacts everything.
+
+Principles
+----------
+* Fast, Native, Modern, Open
+* Basic data exploration for CSVs only
+* Extensible
+* Never assumes information about data
+* Only make changes when asked
+* Python 3 / PyQT5 only
